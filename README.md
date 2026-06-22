@@ -24,5 +24,7 @@ dislike: volume down
 stop: start/stop media playback
 
 - you can see your camera and feedback on the recognized gestures in the window.
+- if you keep holding a gesture, it will only be recognized once. Remove your hand and then show the gesture again if you want to e.g. up your volume twice
+- There also is a cooldown between gestures that can be adjusted at the top of the code, if you want to switch between gestures faster than once a second
 - close the window to stop the program
 
