@@ -4,10 +4,16 @@ import numpy as np
 import sys
 import pyglet
 import pynput
+import time
 from time import sleep
 from pyglet import window
 from PIL import Image
 from pynput.keyboard import Key, Controller
+
+#variables for smoother gesture recognition
+last_gesture = None
+last_trigger_time = 0
+cooldown = 1
 
 #control keyboard
 keyboard = Controller()
@@ -62,7 +68,7 @@ print("to stop this programm, jsut close the camera window")
 
 @win.event
 def on_draw():
-    global label_names, SIZE, IMG_SIZE, cap, width, height, keyboard
+    global label_names, SIZE, IMG_SIZE, cap, width, height, keyboard, last_gesture, last_trigger_time, cooldown
 
     # Capture a frame from the webcam
     ret, frame = cap.read()
@@ -71,22 +77,32 @@ def on_draw():
         reshaped = resized.reshape(-1, IMG_SIZE, IMG_SIZE, 3)
 
         prediction = model.predict(reshaped)
-        if label_names[np.argmax(prediction)] == "like":
-            print("vol up")
-            # keyboard.press(Key.media_volume_up)
-            sleep(1)
-            # keyboard.release(Key.media_volume_up)
+        gesture = label_names[np.argmax(prediction)]
+        
+        #reset last_gesture when no gesture is shown
+        if gesture == "no_gesture":
+            last_gesture = "no_gesture"
 
-        elif label_names[np.argmax(prediction)] == "dislike":
-            print("vol down")
-            # keyboard.press(Key.media_volume_up)
-            sleep(1)
-            # keyboard.release(Key.media_volume_up)
-        elif label_names[np.argmax(prediction)] == "stop":
-            print("start/stop")
-            #keyboard.press(Key.media_play_pause)
-            sleep(1)
-            #keyboard.release(Key.media_play_pause)
+        current_time = time.time()
+
+        #wait after triggering the next gesture and have at least one gesture (including no gesture) in between recognizing the same one again
+        if (gesture != "no_gesture" and
+            gesture != last_gesture and
+            current_time - last_trigger_time >= cooldown):
+            last_gesture = gesture
+            last_trigger_time = current_time
+            if gesture == "like":
+                print("vol up")
+                keyboard.press(Key.media_volume_up)
+                keyboard.release(Key.media_volume_up)
+            elif gesture == "dislike":
+                print("vol down")
+                keyboard.press(Key.media_volume_up)
+                keyboard.release(Key.media_volume_up)
+            elif gesture == "stop":
+                print("start/stop")
+                keyboard.press(Key.media_play_pause)
+                keyboard.release(Key.media_play_pause)
 
         #print(label_names[np.argmax(prediction)], np.max(prediction))
 
